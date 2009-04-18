@@ -1,63 +1,81 @@
-#line 1 "inc/Module/Install/Base.pm - /Users/ingy/local/lib/perl5/site_perl/5.8.6/Module/Install/Base.pm"
+#line 1
 package Module::Install::Base;
 
+$VERSION = '0.84';
+
 # Suspend handler for "redefined" warnings
-BEGIN { my $w = $SIG{__WARN__}; $SIG{__WARN__} = sub { $w } };
-
-#line 30
-
-sub new {
-    my ($class, %args) = @_;
-
-    foreach my $method (qw(call load)) {
-        *{"$class\::$method"} = sub {
-            +shift->_top->$method(@_);
-        } unless defined &{"$class\::$method"};
-    }
-
-    bless(\%args, $class);
+BEGIN {
+	my $w = $SIG{__WARN__};
+	$SIG{__WARN__} = sub { $w };
 }
 
-#line 48
+### This is the ONLY module that shouldn't have strict on
+# use strict;
 
-sub AUTOLOAD {
-    my $self = shift;
+#line 41
 
-    local $@;
-    my $autoload = eval { $self->_top->autoload } or return;
-    goto &$autoload;
+sub new {
+	my ($class, %args) = @_;
+
+	foreach my $method ( qw(call load) ) {
+		next if defined &{"$class\::$method"};
+		*{"$class\::$method"} = sub {
+			shift()->_top->$method(@_);
+		};
+	}
+
+	bless( \%args, $class );
 }
 
 #line 62
 
-sub _top { $_[0]->{_top} }
-
-#line 73
-
-sub admin {
-    my $self = shift;
-    $self->_top->{admin} or Module::Install::Base::FakeAdmin->new;
+sub AUTOLOAD {
+	my $self = shift;
+	local $@;
+	my $autoload = eval {
+		$self->_top->autoload
+	} or return;
+	goto &$autoload;
 }
 
+#line 79
+
+sub _top {
+	$_[0]->{_top};
+}
+
+#line 94
+
+sub admin {
+	$_[0]->_top->{admin}
+	or
+	Module::Install::Base::FakeAdmin->new;
+}
+
+#line 110
+
 sub is_admin {
-    my $self = shift;
-    $self->admin->VERSION;
+	$_[0]->admin->VERSION;
 }
 
 sub DESTROY {}
 
 package Module::Install::Base::FakeAdmin;
 
-my $Fake;
-sub new { $Fake ||= bless(\@_, $_[0]) }
+my $fake;
+sub new {
+	$fake ||= bless(\@_, $_[0]);
+}
+
 sub AUTOLOAD {}
+
 sub DESTROY {}
+
+# Restore warning handler
+BEGIN {
+	$SIG{__WARN__} = $SIG{__WARN__}->();
+}
 
 1;
 
-# Restore warning handler
-BEGIN { $SIG{__WARN__} = $SIG{__WARN__}->() };
-
-__END__
-
-#line 120
+#line 157

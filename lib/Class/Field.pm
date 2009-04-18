@@ -3,13 +3,14 @@ use 5.006001;
 use strict;
 use warnings;
 use base 'Exporter';
+use Encode;
 
-our $VERSION = '0.12';
+our $VERSION = '0.15';
 our @EXPORT_OK = qw(field const);
 
 my %code = (
     sub_start =>
-      "sub {\n",
+      "sub {\n  local \*__ANON__ = \"%s::%s\";\n",
     set_default =>
       "  \$_[0]->{%s} = %s\n    unless exists \$_[0]->{%s};\n",
     init =>
@@ -52,7 +53,7 @@ sub field {
           ? '{}'
           : default_as_code($default);
 
-    my $code = $code{sub_start};
+    my $code = sprintf $code{sub_start}, $package, $field;
     if ($args->{-init}) {
         my $fragment = $args->{-weak} ? $code{weak_init} : $code{init};
         $code .= sprintf $fragment, $field, $args->{-init}, ($field) x 4;
@@ -68,7 +69,10 @@ sub field {
     my $sub = eval $code;
     die $@ if $@;
     no strict 'refs';
-    *{"${package}::$field"} = $sub;
+    use utf8;
+    my $method = "${package}::$field";
+    $method = Encode::decode_utf8($method);
+    *{$method} = $sub;
     return $code if defined wantarray;
 }
 
@@ -195,7 +199,7 @@ Ingy döt Net <ingy@cpan.org>
 
 =head1 COPYRIGHT
 
-Copyright (c) 2006. Ingy döt Net. All rights reserved.
+Copyright (c) 2006, 2008, 2009. Ingy döt Net.
 
 This program is free software; you can redistribute it and/or modify it
 under the same terms as Perl itself.
