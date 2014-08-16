@@ -9,7 +9,6 @@ Makefile.PL
 README
 lib/Class/Field.pm
 lib/Class/Field.pod
-t/000-compile-modules.t
 t/TestFieldBase.pm
 t/anon.t
 t/const.t
