@@ -50,7 +50,7 @@ FUNCTIONS
         generated method will be somewhat useless.
 
 NOTE
-    this code was taken directly out the Spiffy module for those people who
+    This code was taken directly out the Spiffy module for those people who
     just want this functionality without using the rest of Spiffy.
 
 AUTHOR
